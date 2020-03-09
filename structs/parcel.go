@@ -36,13 +36,18 @@ func NewParcel(cfg *Config, source string) (*Parcel, error) {
 	if len(parsedSource) == 0 {
 		return nil, fmt.Errorf("Could not parse source: %s", source)
 	}
-	name := filepath.Base(parsedSource["SubDir"])
+
+	name := parsedSource["SubDir"]
+	if name != "" {
+		name = filepath.Base(parsedSource["SubDir"])
+	}
 	ref := strings.Replace(strings.Replace(parsedSource["Ref"], "?ref=", "", 1), fmt.Sprintf("%s-", name), "", 1)
 	parcel := &Parcel{
 		Name:             name,
 		Repository:       parsedSource["Repository"],
 		Tag:              ref,
 		InstallDirectory: cfg.ParcelInstallDirectory,
+		Owner:            parsedSource["Owner"],
 	}
 
 	return parcel, nil
@@ -51,6 +56,7 @@ func NewParcel(cfg *Config, source string) (*Parcel, error) {
 type Parcel struct {
 	Name             string
 	Repository       string
+	Owner            string
 	Tag              string
 	InstallDirectory string
 
@@ -59,11 +65,11 @@ type Parcel struct {
 }
 
 func (p *Parcel) ID() string {
-	return helpers.JoinNonEmptyStrings([]string{p.Repository, p.Name, p.Tag}, "/")
+	return helpers.JoinNonEmptyStrings([]string{p.Owner, p.Repository, p.Name, p.Tag}, "/")
 }
 
 func (p *Parcel) DirectoryName() string {
-	return helpers.JoinNonEmptyStrings([]string{p.Repository, p.Name, p.Tag}, "-")
+	return helpers.JoinNonEmptyStrings([]string{p.Owner, p.Repository, p.Name, p.Tag}, "-")
 }
 
 func (p *Parcel) InstallPath() string {
