@@ -1,0 +1,4 @@
+owner: bbckr
+name: example-python-cron
+version: 1.0.0
+description: This is an example parcel that will render a Nomad cron job running a simple python script.
