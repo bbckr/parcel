@@ -8,9 +8,9 @@ Pull a parcel given the git source URI
 parcel pull [options] [SOURCE]
 
 -f --force # (optional) force pull parcel
-
-# Examples
-
+```
+Examples:
+``` bash
 # pull from remote repository
 parcel pull git::ssh://git@github.com/bbckr/parcel//example
 
@@ -18,17 +18,18 @@ parcel pull git::ssh://git@github.com/bbckr/parcel//example
 parcel pull git::file://${PROJECT_ROOT}/.git//example
 
 # pull from repository ref
-git::ssh://git@github.com/bbckr/parcel//example?ref=${GIT_REF}
+parcel pull git::ssh://git@github.com/bbckr/parcel//example?ref=${GIT_REF}
 ```
 ### render
 Render template output for a parcel given the parcel identifiers. The parcel must be pulled before it can be referenced.
 ``` bash
 parcel render [options] [OWNER] [NAME] [VERSION]
 -v --values # (optional) path to values yaml file
--o --output-dir # directory to output rendered files (default: .)
+-o --output # directory to output rendered files (default: .)
+```
 
-# Examples
-
+Examples:
+``` bash
 # render to output directory
 parcel render -o .output bbckr example 1.0.0
 
@@ -41,6 +42,7 @@ parcel render -v myvalues.yaml bbckr example 1.0.0
 Each parcel requires the following directory structure:
 ``` bash
 folder_name
+|_ static/ # place static files to reference in templates here
 |_ templates/ # place all your templates here
 ...|_ job_1.hcl # go template
 ...|_ job_2.hcl # go template
