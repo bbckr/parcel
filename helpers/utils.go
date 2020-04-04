@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"encoding/base64"
 	"io/ioutil"
 	"log"
 	"os"
@@ -38,6 +39,15 @@ func FindValueFromKeyAsPrefix(s string, m map[string]string) (string, bool) {
 	return "", false
 }
 
+func ContainsAnyPrefix(s string, arr []string) bool {
+	for _, v := range arr {
+		if strings.HasPrefix(s, v) {
+			return true
+		}
+	}
+	return false
+}
+
 func MustCompileRegexSubmatch(s, regexStr string) map[string]string {
 	re := regexp.MustCompile(regexStr)
 	match := re.FindStringSubmatch(s)
@@ -58,20 +68,36 @@ func JoinNonEmptyStrings(s []string, sep string) string {
 	return strings.Join(segments, sep)
 }
 
-func LoadYamlFromPath(path string) (map[interface{}]interface{}, error) {
+func LoadYamlFromPath(path string, out interface{}) error {
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	result := make(map[interface{}]interface{})
-	if err = yaml.Unmarshal(f, &result); err != nil {
-		return nil, err
+	if err = yaml.Unmarshal(f, &out); err != nil {
+		return err
 	}
 
-	return result, nil
+	return nil
 }
 
 func EnsureDirectory(path string) error {
 	return os.MkdirAll(path, 0751)
+}
+
+func EncodeBase64(s string) string {
+	return base64.StdEncoding.EncodeToString([]byte(s))
+}
+
+func EncodeBase64FromArray(args []string) string {
+	s := strings.Join(args, "")
+	return base64.StdEncoding.EncodeToString([]byte(s))
+}
+
+func DecodeBase64(s string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
