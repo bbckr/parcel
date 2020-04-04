@@ -26,9 +26,9 @@ func NewParcel(cfg *Config, owner, name, version string) (*Parcel, error) {
 		InstallDirectory: cfg.ParcelInstallDirectory,
 	}
 
-	path, err := cfg.Index.PathFrom(parcel.ID())
+	path, err := cfg.Index.PathFrom(parcel.Ref())
 	if err != nil {
-		return nil, fmt.Errorf("Error reading parcel %s/%s version %s from index: %s", owner, name, version, err)
+		return nil, fmt.Errorf("Error reading parcel from index: %s", err)
 	}
 
 	source, _ := helpers.DecodeBase64(filepath.Base(path))

@@ -105,16 +105,16 @@ func EnsureDirectory(path string) error {
 }
 
 func EncodeBase64(s string) string {
-	return base64.StdEncoding.EncodeToString([]byte(s))
+	return base64.RawURLEncoding.EncodeToString([]byte(s))
 }
 
 func EncodeBase64FromArray(args []string) string {
 	s := strings.Join(args, "")
-	return base64.StdEncoding.EncodeToString([]byte(s))
+	return base64.RawURLEncoding.EncodeToString([]byte(s))
 }
 
 func DecodeBase64(s string) (string, error) {
-	data, err := base64.StdEncoding.DecodeString(s)
+	data, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
 		return "", err
 	}

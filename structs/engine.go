@@ -83,7 +83,7 @@ func (e *Engine) Load(owner, name, version string) (*Parcel, error) {
 	}
 
 	var values map[interface{}]interface{}
-	if err := helpers.LoadYamlFromPath(parcel.ValuesPath(), values); err != nil {
+	if err := helpers.LoadYamlFromPath(parcel.ValuesPath(), &values); err != nil {
 		return nil, fmt.Errorf("Unable to load parcel: %s", err)
 	}
 	parcel.Values = values
