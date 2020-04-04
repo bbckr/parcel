@@ -1,0 +1,27 @@
+name: python-example
+description: Example of a Nomad job file for a python cron executing a simple script.
+datacenters: ["us-east-1"]
+
+# meta:
+#   meta_key: "meta_value"
+
+image:
+  name: "python"
+  tag: "3.8-alpine"
+env:
+  PWD: "/app"
+  LOG_FORMAT: "json"
+resources:
+  cpu: 100
+  memory: 512
+  network:
+    mbits: 10
+    
+command: "python"
+args: []
+maxscale: true
+restart_mode: "fail"
+periodic:
+  schedule: "0 */4 * * *"
+  time_zone: "UTC"
+  prohibit_overlap: true

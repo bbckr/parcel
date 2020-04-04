@@ -17,7 +17,11 @@ var (
 
 func main() {
 	rootLogger := log.New()
-	cfg := structs.NewConfig()
+
+	cfg, err := structs.NewConfig()
+	if err != nil {
+		panic(fmt.Sprintf("Error creating config: %s", err))
+	}
 
 	if cfg.Debug {
 		rootLogger.SetLevel(log.DebugLevel)

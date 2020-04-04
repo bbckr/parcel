@@ -33,13 +33,32 @@ func NewRenderCommand(cfg *structs.Config, logger *log.Entry) *cli.Command {
 				Destination: &opts.OutputDirectory,
 			},
 		},
-		ArgsUsage: "[SOURCE]",
+		ArgsUsage: "[OWNER] [NAME] [VERSION]",
 	}
 }
 
 func RunRender(c *cli.Context, cfg *structs.Config, opts *structs.RenderOptions, logger *log.Entry) error {
 	logger = logger.WithField("command", c.Command.Name)
-	source := c.Args().First()
+	owner := c.Args().Get(0)
+	if len(owner) == 0 {
+		err := fmt.Errorf("Missing first argument [OWNER]")
+		logger.Fatal(err)
+		return err
+	}
+
+	name := c.Args().Get(1)
+	if len(name) == 0 {
+		err := fmt.Errorf("Missing second argument [NAME]")
+		logger.Fatal(err)
+		return err
+	}
+
+	version := c.Args().Get(2)
+	if len(version) == 0 {
+		err := fmt.Errorf("Missing second argument [VERSION]")
+		logger.Fatal(err)
+		return err
+	}
 
 	if _, err := os.Stat(opts.OutputDirectory); os.IsNotExist(err) {
 		logger.Infof("Ensuring output directory: %s", opts.OutputDirectory)
@@ -52,8 +71,8 @@ func RunRender(c *cli.Context, cfg *structs.Config, opts *structs.RenderOptions,
 	}
 
 	engine := structs.NewEngineFromConfig(cfg)
-	logger.WithField("source", source).Info("Loading parcel from source")
-	parcel, err := engine.Load(source)
+	logger.Info("Loading parcel")
+	parcel, err := engine.Load(owner, name, version)
 	if err != nil {
 		err = fmt.Errorf("Failed to load parcel: %s", err)
 		logger.Fatal(err)

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
-	"strings"
 	"text/template"
 
 	"github.com/bbckr/parcel/helpers"
@@ -16,60 +14,60 @@ import (
 const (
 	templateDirectoryPath = "templates"
 	valuesFilePath        = "values.yaml"
-	assetsDirectoryPath   = "assets"
+	staticDirectoryPath   = "static"
+	manifestFilePath      = "manifest.yaml"
 )
 
-var (
-	protocolPatterns = map[string]string{
-		"git::ssh":  "git::ssh://(?P<Host>.*)/(?P<Owner>.*)/(?P<Repository>.*).git(//(?P<SubDir>[-\\w/]*))?([?]ref=(?P<Ref>.*))?",
-		"git::file": "git::file://(?P<BaseDir>.*)/(?P<Repository>.*)/.git(//(?P<SubDir>[-\\w/]*))?([?]ref=(?P<Ref>.*))?",
-	}
-)
-
-func NewParcel(cfg *Config, source string) (*Parcel, error) {
-	pattern, ok := helpers.FindValueFromKeyAsPrefix(source, protocolPatterns)
-	if !ok {
-		return nil, fmt.Errorf("Invalid source protocol: must be %s", reflect.ValueOf(protocolPatterns).MapKeys())
-	}
-
-	parsedSource := helpers.MustCompileRegexSubmatch(source, pattern)
-	if len(parsedSource) == 0 {
-		return nil, fmt.Errorf("Could not parse source: %s", source)
-	}
-
-	name := parsedSource["SubDir"]
-	if name != "" {
-		name = filepath.Base(parsedSource["SubDir"])
-	}
-	ref := strings.Replace(strings.Replace(parsedSource["Ref"], "?ref=", "", 1), fmt.Sprintf("%s-", name), "", 1)
+func NewParcel(cfg *Config, owner, name, version string) (*Parcel, error) {
 	parcel := &Parcel{
+		Owner:            owner,
 		Name:             name,
-		Repository:       parsedSource["Repository"],
-		Tag:              ref,
+		Version:          version,
 		InstallDirectory: cfg.ParcelInstallDirectory,
-		Owner:            parsedSource["Owner"],
 	}
+
+	path, err := cfg.Index.PathFrom(parcel.Ref())
+	if err != nil {
+		return nil, fmt.Errorf("Error reading parcel from index: %s", err)
+	}
+
+	source, _ := helpers.DecodeBase64(filepath.Base(path))
+	parcel.Source = source
 
 	return parcel, nil
 }
 
+func NewParcelFromSource(cfg *Config, source string) *Parcel {
+	parcel := &Parcel{
+		Source:           source,
+		InstallDirectory: cfg.ParcelInstallDirectory,
+	}
+
+	return parcel
+}
+
 type Parcel struct {
 	Name             string
-	Repository       string
 	Owner            string
-	Tag              string
+	Version          string
+	Description      string
 	InstallDirectory string
+	Source           string
 
 	Templates []*ParcelTemplate
 	Values    map[interface{}]interface{}
 }
 
 func (p *Parcel) ID() string {
-	return helpers.JoinNonEmptyStrings([]string{p.Owner, p.Repository, p.Name, p.Tag}, "/")
+	return helpers.JoinNonEmptyStrings([]string{p.Owner, p.Name, p.Version}, "/")
+}
+
+func (p *Parcel) Ref() string {
+	return helpers.EncodeBase64FromArray([]string{p.Owner, p.Name, p.Version})
 }
 
 func (p *Parcel) DirectoryName() string {
-	return helpers.JoinNonEmptyStrings([]string{p.Owner, p.Repository, p.Name, p.Tag}, "-")
+	return helpers.EncodeBase64(p.Source)
 }
 
 func (p *Parcel) InstallPath() string {
@@ -80,20 +78,27 @@ func (p *Parcel) TemplateDirectory() string {
 	return fmt.Sprintf("%s/%s", p.InstallPath(), templateDirectoryPath)
 }
 
-func (p *Parcel) AssetsDirectory() string {
-	return fmt.Sprintf("%s/%s", p.InstallPath(), assetsDirectoryPath)
+func (p *Parcel) StaticDirectory() string {
+	return fmt.Sprintf("%s/%s", p.InstallPath(), staticDirectoryPath)
 }
 
 func (p *Parcel) ValuesPath() string {
 	return fmt.Sprintf("%s/%s", p.InstallPath(), valuesFilePath)
 }
 
-func (p *Parcel) Version() string {
-	if len(p.Tag) == 0 {
-		return "latest"
-	}
+func (p *Parcel) ManifestPath() string {
+	return fmt.Sprintf("%s/%s", p.InstallPath(), manifestFilePath)
+}
 
-	return strings.Replace(p.Tag, p.Name, "", 1)
+func (p *Parcel) IndexEntry() *Entry {
+	return &Entry{
+		Name:        p.Name,
+		Owner:       p.Owner,
+		Version:     p.Version,
+		Description: p.Description,
+		Path:        p.InstallPath(),
+		Source:      p.Source,
+	}
 }
 
 func (p *Parcel) IsValid() error {
@@ -103,12 +108,12 @@ func (p *Parcel) IsValid() error {
 		result = multierror.Append(result, fmt.Errorf("Name -> must not be empty"))
 	}
 
-	if p.Repository == "" {
-		result = multierror.Append(result, fmt.Errorf("Repository -> must not be empty"))
+	if p.Owner == "" {
+		result = multierror.Append(result, fmt.Errorf("Owner -> must not be empty"))
 	}
 
-	if p.Tag == "" {
-		result = multierror.Append(result, fmt.Errorf("Tag -> must not be empty"))
+	if p.Version == "" {
+		result = multierror.Append(result, fmt.Errorf("Version -> must not be empty"))
 	}
 
 	if p.InstallDirectory == "" {
@@ -136,8 +141,10 @@ type ParcelTemplate struct {
 }
 
 func (tmpl *ParcelTemplate) Render(values map[interface{}]interface{}) (bytes.Buffer, error) {
+	t := tmpl.Template
+
 	var renderedOutput bytes.Buffer
-	if err := tmpl.Template.Execute(&renderedOutput, values); err != nil {
+	if err := t.Execute(&renderedOutput, values); err != nil {
 		return renderedOutput, fmt.Errorf("Error rendering template: %s", err)
 	}
 	return renderedOutput, nil
