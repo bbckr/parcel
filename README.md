@@ -3,12 +3,37 @@ Simple go template renderer for nomad and other generic groups of templates (i.e
 
 ## Command usage
 ### pull
-```
-parcel pull [command options] [SOURCE]
+Pull a parcel given the git source URI
+``` bash
+parcel pull [options] [SOURCE]
+
+-f --force # (optional) force pull parcel
+
+# Examples
+
+# pull from remote repository
+parcel pull git::ssh://git@github.com/bbckr/parcel//example
+
+# pull from local repository
+parcel pull git::file://${PROJECT_ROOT}/.git//example
+
+# pull from repository ref
+git::ssh://git@github.com/bbckr/parcel//example?ref=${GIT_REF}
 ```
 ### render
-```
-parcel render [command options] [OWNER] [NAME] [VERSION]
+Render template output for a parcel given the parcel identifiers. The parcel must be pulled before it can be referenced.
+``` bash
+parcel render [options] [OWNER] [NAME] [VERSION]
+-v --values # (optional) path to values yaml file
+-o --output-dir # directory to output rendered files (default: .)
+
+# Examples
+
+# render to output directory
+parcel render -o .output bbckr example 1.0.0
+
+# override default values
+parcel render -v myvalues.yaml bbckr example 1.0.0
 ```
 
 ## Documentation
@@ -59,5 +84,19 @@ job "sample-jon" {
     }
 }
 ```
-### Injected variables
-TODO
+### Template Variables
+- `.Meta.name` Parcel name, taken from manifest
+- `.Meta.owner` Parcel owner, taken from manifest
+- `.Meta.version` Parcel version, taken from manifest
+- `.Values.*` Merged values from default Parcel values and values passed during render
+- `.Static.path` Path to static directory to reference static resources in templates
+
+### Template Functions
+Uses [Go template](https://golang.org/pkg/text/template/) as a base and adds the following functions:
+- `toJSON` Marshal to JSON string
+- `replace` An alias for strings.Replace
+- `replaceAll` An alias for strings.ReplaceAll
+- `quote` Surround with double quotation marks
+- `b64encode` Base64 encode string
+- `b64decode` Base64 decode string
+
