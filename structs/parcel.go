@@ -50,6 +50,7 @@ type Parcel struct {
 	Name             string
 	Owner            string
 	Version          string
+	Description      string
 	InstallDirectory string
 	Source           string
 
@@ -87,6 +88,17 @@ func (p *Parcel) ValuesPath() string {
 
 func (p *Parcel) ManifestPath() string {
 	return fmt.Sprintf("%s/%s", p.InstallPath(), manifestFilePath)
+}
+
+func (p *Parcel) IndexEntry() *Entry {
+	return &Entry{
+		Name:        p.Name,
+		Owner:       p.Owner,
+		Version:     p.Version,
+		Description: p.Description,
+		Path:        p.InstallPath(),
+		Source:      p.Source,
+	}
 }
 
 func (p *Parcel) IsValid() error {

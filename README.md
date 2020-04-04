@@ -8,7 +8,7 @@ parcel pull [command options] [SOURCE]
 ```
 ### render
 ```
-parcel render [command options] [SOURCE]
+parcel render [command options] [OWNER] [NAME] [VERSION]
 ```
 
 ## Documentation

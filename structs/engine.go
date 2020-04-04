@@ -139,20 +139,16 @@ func (e *Engine) Pull(source string, opts *PullOptions, logger *log.Entry) error
 	}
 
 	var manifest map[string]string
-	if err := helpers.LoadYamlFromPath(parcel.ManifestPath(), manifest); err != nil {
+	if err := helpers.LoadYamlFromPath(parcel.ManifestPath(), &manifest); err != nil {
 		return fmt.Errorf("Unable to load parcel manifest: %s", err)
 	}
 
-	entry := &Entry{
-		Name:        manifest["name"],
-		Owner:       manifest["owner"],
-		Version:     manifest["version"],
-		Description: manifest["description"],
-		Path:        installPath,
-		Source:      source,
-	}
+	parcel.Name = manifest["name"]
+	parcel.Owner = manifest["owner"]
+	parcel.Version = manifest["version"]
+	parcel.Description = manifest["description"]
 
-	e.cfg.Index.AddEntry(parcel.Ref(), entry)
+	e.cfg.Index.AddEntry(parcel.Ref(), parcel.IndexEntry())
 	if err := e.cfg.Index.Persist(); err != nil {
 		return err
 	}

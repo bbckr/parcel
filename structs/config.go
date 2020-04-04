@@ -83,11 +83,14 @@ func NewConfig() (*Config, error) {
 
 func loadIndex(cfg *Config) error {
 	index := &Index{
-		path: fmt.Sprintf("%s/%s", cfg.ParcelInstallDirectory, indexFilePath),
+		Path:    fmt.Sprintf("%s/%s", cfg.ParcelInstallDirectory, indexFilePath),
+		Entries: make(map[string]*Entry),
 	}
-	if err := helpers.LoadYamlFromPath(index.path, index); err != nil {
+
+	if err := helpers.LoadYamlEnsurePath(index.Path, &index); err != nil {
 		return fmt.Errorf("Unable to load index: %s", err)
 	}
+
 	cfg.Index = index
 	return nil
 }
@@ -102,12 +105,12 @@ type Entry struct {
 }
 
 type Index struct {
-	path    string            `yaml:"-"`
-	entries map[string]*Entry `yaml:"entries"`
+	Path    string            `yaml:"-"`
+	Entries map[string]*Entry `yaml:"entries"`
 }
 
 func (i *Index) PathFrom(k string) (string, error) {
-	entry, ok := i.entries[k]
+	entry, ok := i.Entries[k]
 	if !ok {
 		return "", fmt.Errorf("Entry does not exist")
 	}
@@ -115,16 +118,16 @@ func (i *Index) PathFrom(k string) (string, error) {
 }
 
 func (i *Index) AddEntry(key string, entry *Entry) {
-	i.entries[key] = entry
+	i.Entries[key] = entry
 }
 
 func (i *Index) Persist() error {
-	data, err := yaml.Marshal(&i)
+	data, err := yaml.Marshal(i)
 	if err != nil {
 		return fmt.Errorf("Could not save index: %s", err)
 	}
 
-	if err = ioutil.WriteFile(i.path, data, 0644); err != nil {
+	if err = ioutil.WriteFile(i.Path, data, 0644); err != nil {
 		return fmt.Errorf("Could not write to index: %s", err)
 	}
 

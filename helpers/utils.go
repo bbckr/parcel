@@ -68,13 +68,32 @@ func JoinNonEmptyStrings(s []string, sep string) string {
 	return strings.Join(segments, sep)
 }
 
+func LoadYamlEnsurePath(path string, out interface{}) error {
+	f, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0644)
+	defer f.Close()
+	if err != nil {
+		return err
+	}
+
+	bytes, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	if err = yaml.Unmarshal(bytes, out); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func LoadYamlFromPath(path string, out interface{}) error {
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	if err = yaml.Unmarshal(f, &out); err != nil {
+	if err = yaml.Unmarshal(f, out); err != nil {
 		return err
 	}
 
