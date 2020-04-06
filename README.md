@@ -44,9 +44,10 @@ Each parcel requires the following directory structure:
 folder_name
 |_ static/ # place static files to reference in templates here
 |_ templates/ # place all your templates here
-...|_ job_1.hcl # go template
-...|_ job_2.hcl # go template
-|_ values.yaml # default values to feed template
+...|_ job_1.hcl # go template, any name/ext
+...|_ job_2.hcl # go template, any name/ext
+|_ values.yaml # default values to feed parcel templates
+|_ manifest.yaml # parcel manifest
 ```
 ### Referencing values in templates
 Parcel uses basic Go templating with no added helper functions.
